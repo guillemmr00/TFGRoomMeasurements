@@ -1,9 +1,12 @@
 package edu.upf.aism.tfgroommeasurements
 
 import android.app.AlertDialog
+import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.core.view.isVisible
 import com.anychart.AnyChart
@@ -12,12 +15,11 @@ import com.anychart.chart.common.dataentry.DataEntry
 import com.anychart.chart.common.dataentry.ValueDataEntry
 import com.anychart.enums.MarkerType
 import com.github.psambit9791.jdsp.filter.Butterworth
-import com.github.psambit9791.jdsp.transform.DiscreteFourier
 import com.github.psambit9791.jdsp.transform.FastFourier
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import edu.upf.aism.tfgroommeasurements.databinding.ActivityVisualizerBinding
 import kotlinx.coroutines.*
 import kotlin.math.log10
-import java.util.concurrent.Executors
 import kotlin.math.pow
 
 class Visualizer : AppCompatActivity() {
@@ -42,21 +44,21 @@ class Visualizer : AppCompatActivity() {
 
 
     private lateinit var tArray : DoubleArray
-    //private lateinit var schroeder : DoubleArray
     private lateinit var octaveParams : Array<DoubleArray>
     private lateinit var thirdOctaveParams : Array<DoubleArray>
 
-
-    private var visualizerMode = "ir"
-
-
     private lateinit var alertTv : TextView
     private lateinit var dialog : AlertDialog
+
+
+    private lateinit var bottomSheetBehavior: BottomSheetBehavior<LinearLayout>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityVisualizerBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+
 
         val builder = AlertDialog.Builder(this)
         val inflater = LayoutInflater.from(this)
@@ -66,9 +68,14 @@ class Visualizer : AppCompatActivity() {
         dialog = builder.create()
         alertTv = view.findViewById<TextView>(R.id.alertTV)
 
+        bottomSheetBehavior = BottomSheetBehavior.from(binding.bottomSheetGraph.bottomSheetGraphInfo)
+        bottomSheetBehavior.peekHeight = 0
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+        bottomSheetBehavior.isDraggable = false
 
-        val languages = resources.getStringArray(R.array.modes)
-        val arrayAdapter = ArrayAdapter(this, R.layout.dropdown_item, languages)
+
+        val modes = resources.getStringArray(R.array.modes)
+        val arrayAdapter = ArrayAdapter(this, R.layout.dropdown_item, modes)
         val autoCompleteTextView = findViewById<AutoCompleteTextView>(R.id.autocompleteTV)
         autoCompleteTextView.setAdapter(arrayAdapter)
 
@@ -85,134 +92,114 @@ class Visualizer : AppCompatActivity() {
         impulseResponse = loadPcmFromFile(impulseResponsePath)!!
 
 
-        val computationContext = Executors.newFixedThreadPool(5).asCoroutineDispatcher()
-
-        /*CoroutineScope(Dispatchers.Main).launch{
-            val time = measureTimeMillis { withContext(computationContext) {
-                val ans = fft(impulseResponse)
-                freqs = ans.first
-                freqResponse = ans.second
-                octaveParams = computeParameters(1.0)
-                //thirdOctaveParams = computeParameters((1/3).toDouble())
-
-            } }
+        CoroutineScope(Dispatchers.IO).launch{ computeAll()
             runOnUiThread{Toast.makeText(this@Visualizer, "Computations finished", Toast.LENGTH_LONG).show()}
-            runOnUiThread { println("computations finished in :${time}") }
-        }*/
+        }
 
-        CoroutineScope(Dispatchers.IO).launch{ computeAll() }
+        binding.bottomSheetGraph.graphFilename.setText("${filename}")
+        binding.bottomSheetGraph.tvDate.setText("Date: ${date.replace("_", " ").replace("-", "/")}")
+        binding.bottomSheetGraph.tvMode.setText("Mode: ${mode}")
+        binding.bottomSheetGraph.tvDuration.setText("Duration: ${duration} seconds")
+        binding.bottomSheetGraph.tvStartFreq.setText("Starting Frequency: ${f0} Hz")
+        binding.bottomSheetGraph.tvEndFreq.setText("Ending Frequency: ${f1} Hz")
+        binding.bottomSheetGraph.textInputNotes.setText("${notes}")
 
 
-        plot("ir")
+        Thread.sleep(1000)
+        plot("rt", third = true)
 
         autoCompleteTextView.setOnItemClickListener { parent, view, position, id ->
-            when (parent.getItemAtPosition(position).toString().lowercase()){
+            val selectedMode = parent.getItemAtPosition(position).toString().lowercase()
+            binding.normToggleBtn.isVisible = false
+            binding.smoothToggleBtn.isVisible = false
+            binding.normToggleBtn.isSelected = false
+            binding.smoothToggleBtn.isSelected = false
+            binding.octaveConfigLayout.isVisible = false
+            binding.thirdOctaveSwitch.isChecked = false
+
+            when(selectedMode){
                 "impulse resp." -> {
                     plotMode="ir"
-                    binding.normToggleBtn.apply {
-                        isVisible= true
-                        isSelected = false
-                    }
-                    binding.smoothToggleBtn.apply {
-                        isVisible= false
-                        isSelected = false
-                    }
-                    plot("ir")
+                    binding.normToggleBtn.isVisible = true
                 }
                 "frequency resp." -> {
                     plotMode="fr"
-                    binding.normToggleBtn.apply {
-                        isVisible= false
-                        isSelected = false
-                    }
-                    binding.smoothToggleBtn.apply {
-                        isVisible= true
-                        isSelected = false
-                    }
-                    plot("fr")
+                    binding.smoothToggleBtn.isVisible= true
                 }
                 "reverb. times" -> {
                     plotMode="rt"
-                    binding.normToggleBtn.apply {
-                        isVisible= false
-                        isSelected = false
-                    }
-                    binding.smoothToggleBtn.apply {
-                        isVisible= false
-                        isSelected = false
-                    }
-                    plot("rt")
+                    binding.octaveConfigLayout.isVisible= true
                 }
                 "clarity" -> {
                     plotMode="clarity"
-                    binding.normToggleBtn.apply {
-                        isVisible= false
-                        isSelected = false
-                    }
-                    binding.smoothToggleBtn.apply {
-                        isVisible= false
-                        isSelected = false
-                    }
-                    plot("clarity")
+                    binding.octaveConfigLayout.isVisible = true
                 }
                 "definition" -> {
                     plotMode="definition"
-                    binding.normToggleBtn.apply {
-                        isVisible= false
-                        isSelected = false
-                    }
-                    binding.smoothToggleBtn.apply {
-                        isVisible= false
-                        isSelected = false
-                    }
-                    plot("definition")
+                    binding.octaveConfigLayout.isVisible = true
                 }
                 "dtt & cte" -> {
                     plotMode="dtt & cte"
-                    binding.normToggleBtn.apply {
-                        isVisible= false
-                        isSelected = false
-                    }
-                    binding.smoothToggleBtn.apply {
-                        isVisible= false
-                        isSelected = false
-                    }
-                    plot("dtt & cte")
                 }
             }
+            plot(plotMode)
         }
 
         binding.normToggleBtn.setOnClickListener {
             if (binding.normToggleBtn.isChecked){
-            plot(plotMode, true)
-        }else{
             plot(plotMode, false)
+        }else{
+            plot(plotMode, true)
         } }
 
 
         binding.backBtn.setOnClickListener {
             onBackPressed()
         }
+
+        binding.thirdOctaveSwitch.setOnClickListener{
+            if(binding.normToggleBtn.isChecked){
+                plot(plotMode, third=true)
+            }
+            else{
+                plot(plotMode)
+            }
+        }
+
+        binding.btnInfo.setOnClickListener {
+            bottomSheetBehavior.state=BottomSheetBehavior.STATE_EXPANDED
+            binding.bottomSheetBGGraph.visibility = View.VISIBLE
+        }
+
+        binding.bottomSheetGraph.btnCloseBottomSheetGraph.setOnClickListener {
+            dismiss()
+        }
+        binding.bottomSheetGraph.btnOkGraph.setOnClickListener {
+            dismiss()
+        }
+        binding.bottomSheetGraph.btnCancelGraph.setOnClickListener {
+            dismiss()
+        }
+
         binding.smoothToggleBtn.isVisible = false
+        binding.octaveConfigLayout.isVisible = false
 
     }
 
-    private fun plot(mode: String, norm : Boolean=false){
+    private fun plot(mode: String, norm : Boolean=false, smooth: Boolean = false, third : Boolean = false){
         val chartView = findViewById<AnyChartView>(R.id.chart_view)
 
-
         val line = AnyChart.line()
-        line.removeAllSeries()
-        tArray = (0 until impulseResponse.size).map { it.toDouble() / sampleRate }.toDoubleArray()
 
         if (mode == "ir"){
             val data = ArrayList<DataEntry>()
+            tArray = (0 until impulseResponse.size).map { it.toDouble() / sampleRate }.toDoubleArray()
+
             if (norm){
 
                 for (i in 0 until impulseResponse.size){
                     data.add(ValueDataEntry(tArray[i], gainToDecibels(impulseResponse[i]*amplitude)))
                 }
-
 
                 val hor = ArrayList<DataEntry>()
                 hor.add(ValueDataEntry(0, amplitude))
@@ -230,7 +217,8 @@ class Visualizer : AppCompatActivity() {
                 }
             }
 
-            line.line(data)
+            val irLine = line.line(data)
+            irLine.name("IR")
 
         }
 
@@ -239,7 +227,8 @@ class Visualizer : AppCompatActivity() {
             for (i in f0.toInt() until f1.toInt()){
                 data.add(ValueDataEntry(freqs[i], freqResponse[i]))
             }
-            line.line(data)
+            val frLine = line.line(data)
+            frLine.name("FR")
         }
 
         else if(mode=="rt"){
@@ -248,20 +237,33 @@ class Visualizer : AppCompatActivity() {
             val t30 = ArrayList<DataEntry>()
             val t60 = ArrayList<DataEntry>()
 
-            for (i in 0 until octaveParams[0].size){
-                edt.add(ValueDataEntry(octaveParams[0][i], octaveParams[1][i]))
-                t20.add(ValueDataEntry(octaveParams[0][i], octaveParams[2][i]))
-                t30.add(ValueDataEntry(octaveParams[0][i], octaveParams[3][i]))
-                t60.add(ValueDataEntry(octaveParams[0][i], octaveParams[4][i]))
+            if (third){
+                for (i in 0 until thirdOctaveParams[0].size) {
+                    edt.add(ValueDataEntry(thirdOctaveParams[0][i], thirdOctaveParams[1][i]))
+                    t20.add(ValueDataEntry(thirdOctaveParams[0][i], thirdOctaveParams[2][i]))
+                    t30.add(ValueDataEntry(thirdOctaveParams[0][i], thirdOctaveParams[3][i]))
+                    t60.add(ValueDataEntry(thirdOctaveParams[0][i], thirdOctaveParams[4][i]))
+                }
+            } else{
+                for (i in 0 until octaveParams[0].size) {
+                    edt.add(ValueDataEntry(octaveParams[0][i], octaveParams[1][i]))
+                    t20.add(ValueDataEntry(octaveParams[0][i], octaveParams[2][i]))
+                    t30.add(ValueDataEntry(octaveParams[0][i], octaveParams[3][i]))
+                    t60.add(ValueDataEntry(octaveParams[0][i], octaveParams[4][i]))
+                }
             }
 
             val edtLine = line.line(edt)
+            edtLine.name("EDT")
             edtLine.markers().enabled(true).type(MarkerType.CIRCLE).fill("#000500")
             val t20Line = line.line(t20)
+            t20Line.name("RT20")
             t20Line.markers().enabled(true).type(MarkerType.CIRCLE).fill("#003000")
             val t30Line = line.line(t30)
+            t30Line.name("RT30")
             t30Line.markers().enabled(true).type(MarkerType.CIRCLE).fill("#030000")
             val t60Line = line.line(t60)
+            t60Line.name("RT60")
             t60Line.markers().enabled(true).type(MarkerType.CIRCLE).fill("#090000")
         }
 
@@ -275,8 +277,10 @@ class Visualizer : AppCompatActivity() {
             }
 
             val c50Line = line.line(c50)
+            c50Line.name("C50")
             c50Line.markers().enabled(true).type(MarkerType.CIRCLE).fill("#000500")
             val c80Line = line.line(c80)
+            c80Line.name("C80")
             c80Line.markers().enabled(true).type(MarkerType.CIRCLE).fill("#003000")
         }
 
@@ -287,15 +291,18 @@ class Visualizer : AppCompatActivity() {
             }
 
             val d50Line = line.line(d50)
+            d50Line.name("D50")
             d50Line.markers().enabled(true).type(MarkerType.CIRCLE).fill("#000500")
 
         }
 
         else if(mode =="dtt_cte"){}
 
+        line.legend().enabled(true);
+        line.legend().fontSize(13);
+        line.legend().padding(0, 0, 10, 0);
+
         chartView.setChart(line)
-
-
 
     }
 
@@ -340,6 +347,44 @@ class Visualizer : AppCompatActivity() {
         octaveParams = arrayOf(freqs, edt, t20, t30, t60, c50, c80, d50)
     }
 
+    suspend fun computeParametersThird(octave : Double = (1.0/3.0).toDouble()) = coroutineScope{
+        //octave can take either value 1 or 1/3
+
+        var freqs = doubleArrayOf()
+        var edt = doubleArrayOf()
+        var t20 = doubleArrayOf()
+        var t30 = doubleArrayOf()
+        var t60 = doubleArrayOf()
+        var c50 = doubleArrayOf()
+        var c80 = doubleArrayOf()
+        var d50 = doubleArrayOf()
+
+        val ir = impulseResponse
+
+        var fCenter = 15.6
+        while(fCenter<f1){
+            val fLower = fCenter / (2.0.pow(0.5).pow(octave))
+            val fUpper = fCenter * (2.0.pow(0.5).pow(octave))
+            if (fLower>=f0 && fUpper<=f1){
+                val filter = Butterworth(sampleRate.toDouble())
+                val band = filter.bandPassFilter(ir, 4, fLower, fUpper)
+
+                val peak = findIndexOfMaxValue(band)
+                val schroeder = computeSchroeder(band)
+                freqs += fCenter
+                edt += async{computeEdt(schroeder, peak)}.await()
+                t20 += async{computeT20(schroeder, peak)}.await()
+                t30 += async{computeT30(schroeder, peak)}.await()
+                t60 += async{computeT60(schroeder, peak)}.await()
+                //c50 += async{computeC50(band, peak)}.await()
+                //c80 += async{computeC80(band, peak)}.await()
+                //d50 += async{computeD50(band, peak)}.await()
+
+            }
+            fCenter *= 2.0.pow(octave)
+        }
+        thirdOctaveParams = arrayOf(freqs, edt, t20, t30, t60, c50, c80, d50)
+    }
 
     private fun computeSchroeder(ir: DoubleArray): DoubleArray {
         val reversedIrEnergy = DoubleArray(ir.size) { ir[ir.size - it - 1] * ir[ir.size - it - 1] }
@@ -444,17 +489,6 @@ class Visualizer : AppCompatActivity() {
         return 10* log10(direct/rev)
     }
 
-    suspend fun fft2() = coroutineScope{
-        val fftObj = DiscreteFourier(impulseResponse.sliceArray(0 until 44100))
-        fftObj.transform()
-        freqs = fftObj.getFFTFreq(44100, true)
-        val fftCompl = fftObj.getComplex(true)
-        val divisor = 2 / impulseResponse.size
-        val s_mag = DoubleArray(fftCompl.size){ (fftCompl[it].abs()) * divisor}
-        freqResponse = gainToDecibels(s_mag)
-    }
-
-
 
     suspend fun fft() = coroutineScope{
         val fftObj = FastFourier(impulseResponse)
@@ -478,7 +512,20 @@ class Visualizer : AppCompatActivity() {
     suspend fun computeAll() = coroutineScope {
         awaitAll(
             ::computeParameters,
-            ::fft
+            ::fft,
+            ::computeParametersThird
         )
+    }
+
+    private fun dismiss(){
+        binding.bottomSheetBGGraph.visibility = View.GONE
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+        hideKeyboard(binding.bottomSheetGraph.graphFilename)
+
+    }
+    private fun hideKeyboard(view : View){
+        val imm : InputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(view.windowToken, 0)
+
     }
 }

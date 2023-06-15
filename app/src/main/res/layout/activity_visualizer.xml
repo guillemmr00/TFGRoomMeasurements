@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -8,92 +8,132 @@
     android:orientation="vertical"
     >
 
-
-    <HorizontalScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-
-            <ImageButton
-                android:id="@+id/backBtn"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_gravity="center_vertical"
-                android:background="@drawable/ic_back"
-                android:layout_marginStart="20dp" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense.ExposedDropdownMenu"
-                android:layout_width="170dp"
-                android:layout_height="45dp"
-                android:layout_marginHorizontal="12dp"
-                android:layout_marginVertical="6dp"
-                android:hint="Modes">
-
-                <AutoCompleteTextView
-                    android:id="@+id/autocompleteTV"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:inputType="none"
-                    android:text="Impulse Resp."
-                    android:textSize="12sp"
-                    android:paddingVertical="12dp"
-                    />
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <Button
-                android:id="@+id/btnInfo"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="@drawable/ic_chart_info"
-                android:layout_gravity="center_vertical"
-                android:layout_marginEnd="12dp"/>
-
-            <ToggleButton
-                android:id="@+id/normToggleBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textOn="Normalized"
-                android:textOff="Normalized"
-                android:textColor="@color/black"
-                android:textSize="12sp"
-                android:layout_gravity="center_vertical"
-                android:layout_marginEnd="10dp"
-                />
-
-            <ToggleButton
-                android:id="@+id/smoothToggleBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textOn="Smoothed"
-                android:textOff="Smoothed"
-                android:textColor="@color/black"
-                android:textSize="12sp"
-                android:layout_gravity="center_vertical"
-                />
-
-        </LinearLayout>
-
-    </HorizontalScrollView>
-
-
-    <com.google.android.material.divider.MaterialDivider
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        app:dividerColor="@color/greyDark"
-        android:layout_marginHorizontal="20dp"/>
-
-
-    <com.anychart.AnyChartView
-        android:id="@+id/chart_view"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        />
+        android:orientation="vertical">
 
-</LinearLayout>
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+
+                <ImageButton
+                    android:id="@+id/backBtn"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/ic_back"
+                    android:layout_marginStart="20dp" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense.ExposedDropdownMenu"
+                    android:layout_width="170dp"
+                    android:layout_height="45dp"
+                    android:layout_marginHorizontal="12dp"
+                    android:layout_marginVertical="6dp"
+                    android:hint="Modes">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/autocompleteTV"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:inputType="none"
+                        android:text="Impulse Resp."
+                        android:textSize="12sp"
+                        android:paddingVertical="12dp"
+                        />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <Button
+                    android:id="@+id/btnInfo"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/ic_chart_info"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginEnd="12dp"/>
+
+                <ToggleButton
+                    android:id="@+id/normToggleBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textOn="dBFS"
+                    android:textOff="Norm. (%)"
+                    android:textColor="@color/black"
+                    android:textSize="12sp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginEnd="10dp"
+                    />
+
+                <ToggleButton
+                    android:id="@+id/smoothToggleBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textOn="Smoothed"
+                    android:textOff="Raw"
+                    android:textColor="@color/black"
+                    android:textSize="12sp"
+                    android:layout_gravity="center_vertical"
+                    />
+
+                <LinearLayout
+                    android:id="@+id/octaveConfigLayout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:layout_marginHorizontal="5dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:text="Octave"
+                        android:gravity="center_vertical" />
+                    <Switch
+                        android:id="@+id/thirdOctaveSwitch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:text="1/3 Octave"
+                        android:gravity="center_vertical"
+                        />
+
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </HorizontalScrollView>
+
+
+        <com.google.android.material.divider.MaterialDivider
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            app:dividerColor="@color/greyDark"
+            android:layout_marginHorizontal="20dp"/>
+
+            <com.anychart.AnyChartView
+                android:id="@+id/chart_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                />
+
+    </LinearLayout>
+
+    <View
+        android:id="@+id/bottomSheetBGGraph"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/opaqueBG"/>
+    <include
+        android:id="@+id/bottomSheetGraph"
+        layout="@layout/bottom_sheet_graph_info"/>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
