@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bottomSheet_signalConfig"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:layout_behavior="@string/bottom_sheet_behavior"
+    android:background="@drawable/background_round"
+    android:orientation="vertical">
+
+    <ImageButton
+        android:id="@+id/btnCloseBottomSheet"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/ic_close"
+        android:layout_marginTop="15dp"
+        android:layout_marginLeft="15dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Sweep Configuration"
+        android:textSize="26sp"
+        android:layout_marginTop="0dp"
+        android:textAlignment="center"
+        android:clickable="true"/>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbarAlwaysDrawVerticalTrack="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="30dp">
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/TextLayoutStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/filenameInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="16dp"
+                    android:padding="16dp"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sweep Mode" />
+
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:layout_marginBottom="10dp"/>
+
+            <nl.bryanderidder.themedtogglebuttongroup.ThemedToggleButtonGroup
+                android:id="@+id/sweepMode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:justifyContent="space_evenly"
+                app:flexWrap="wrap"
+                app:toggle_requiredAmount="1"
+                app:toggle_selectableAmount="1"
+                android:layout_marginBottom="10dp">
+
+                <nl.bryanderidder.themedtogglebuttongroup.ThemedButton
+                    android:id="@+id/toggleBtnLinearMode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    app:toggle_text="Linear"
+                    />
+
+                <nl.bryanderidder.themedtogglebuttongroup.ThemedButton
+                    android:id="@+id/toggleBtnExpMode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    app:toggle_text="Exponential"
+                    />
+
+
+
+            </nl.bryanderidder.themedtogglebuttongroup.ThemedToggleButtonGroup>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Length"/>
+
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:layout_marginBottom="10dp"/>
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="10dp">
+
+                <SeekBar
+                    android:id="@+id/seekBarLenght"
+                    android:layout_height="wrap_content"
+                    android:layout_width="match_parent"
+                    android:min="3"
+                    android:max="8"
+                    />
+
+                <TextView
+                    android:id="@+id/seekBarTv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="3.0 secs."
+                    android:textSize="20sp"
+                    android:layout_gravity="center_horizontal"/>
+
+            </LinearLayout>
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sample Rate"/>
+
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:layout_marginBottom="10dp"/>
+
+            <nl.bryanderidder.themedtogglebuttongroup.ThemedToggleButtonGroup
+                android:id="@+id/toggleGroupSampleRate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:justifyContent="space_evenly"
+                app:flexWrap="wrap"
+                app:toggle_requiredAmount="1"
+                app:toggle_selectableAmount="1"
+                android:layout_marginBottom="10dp">
+
+                <nl.bryanderidder.themedtogglebuttongroup.ThemedButton
+                    android:id="@+id/toggleBtn44hz"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    app:toggle_text="44.1 kHz"
+                    android:layout_margin="3dp"/>
+
+
+
+
+            </nl.bryanderidder.themedtogglebuttongroup.ThemedToggleButtonGroup>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Frequency Range (Hz)"/>
+
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_marginBottom="20dp">
+
+                <NumberPicker
+                    android:id="@+id/startFreq_scroll"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    />
+
+                <NumberPicker
+                    android:id="@+id/endFreq_scroll"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="40dp"/>
+
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Level (dBFS)"/>
+
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:layout_marginBottom="10dp"/>
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="10dp">
+
+                <SeekBar
+                    android:id="@+id/seekBarLevel"
+                    android:layout_height="wrap_content"
+                    android:layout_width="match_parent"
+                    android:min="0"
+                    android:max="1000"
+                    />
+
+                <TextView
+                    android:id="@+id/levelBarTv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="-6.00 dBFS"
+                    android:textSize="20sp"
+                    android:layout_gravity="center_horizontal"/>
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Notes"/>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/textInputNotes"
+                    android:layout_width="match_parent"
+                    android:layout_height="80dp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_marginVertical="40dp"
+                app:layout_constraintBottom_toBottomOf="parent">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCancel"
+                    android:layout_width="140dp"
+                    android:layout_height="60dp"
+                    android:text="cancel"
+                    android:backgroundTint="@color/grey"
+                    app:cornerRadius="26dp"
+                    app:rippleColor="@color/greyDark"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnOk"
+                    android:layout_width="140dp"
+                    android:layout_height="60dp"
+                    android:text="OK"
+                    android:layout_marginStart="20dp"
+                    android:backgroundTint="@color/strokeColor"
+                    app:cornerRadius="26dp"
+                    app:rippleColor="@color/greyDark"/>
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+
+</LinearLayout>
+
+

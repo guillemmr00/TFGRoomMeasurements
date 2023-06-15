@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">TFGRoomMeasurements</string>
+    
+    <string-array name="modes">
+        <item>Impulse Resp.</item>
+        <item>Frequency Resp.</item>
+        <item>Reverb. times</item>
+        <item>Clarity</item>
+        <item>Definition</item>
+        <item>DTT &amp; CTE</item>
+
+    </string-array>
+</resources>

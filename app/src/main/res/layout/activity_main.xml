@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"
+    android:background="@drawable/gradient">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/bgImage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:src="@drawable/waveform"
+            android:scaleX="1.1"
+            app:layout_constraintTop_toTopOf="parent"
+            />
+
+
+        <ImageButton
+            android:id="@+id/btnCheckLevels"
+            android:layout_width="@dimen/btn_size"
+            android:layout_height="@dimen/btn_size"
+            android:background="@drawable/ic_ripple_square"
+            android:src="@drawable/sound_level"
+            app:layout_constraintBottom_toTopOf="@id/btnLayout"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/levelTV"
+            android:layout_marginBottom="13dp"
+            />
+
+        <TextView
+            android:id="@+id/levelTV"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="40sp"
+            android:textStyle="bold"
+            android:textColor="@color/grey"
+            android:text="00.00 dBFS"
+            app:layout_constraintBottom_toTopOf="@id/btnLayout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/btnCheckLevels"
+            android:layout_marginBottom="15dp"
+            />
+
+        <LinearLayout
+            android:id="@+id/btnLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:layout_marginBottom="80dp"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <ImageButton
+                android:id="@+id/btnSettings"
+                android:layout_width="@dimen/btn_size"
+                android:src="@drawable/ic_sweep_settings"
+                android:background="@drawable/ic_ripple"
+                android:layout_height="@dimen/btn_size"/>
+
+            <ImageButton
+                android:id="@+id/btnRecord"
+                android:layout_width="66dp"
+                android:background="@drawable/ic_record_disabled"
+                android:layout_marginStart="30dp"
+                android:layout_marginEnd="30dp"
+                android:layout_height="66dp"/>
+            <ImageButton
+                android:id="@+id/btnList"
+                android:layout_width="@dimen/btn_size"
+                android:src="@drawable/ic_list"
+                android:background="@drawable/ic_ripple"
+                android:layout_height="@dimen/btn_size"/>
+
+
+        </LinearLayout>
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    <View
+        android:id="@+id/bottomSheetBG"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/opaqueBG"/>
+    <include
+        android:id="@+id/bottomSheet"
+        layout="@layout/bottom_sheet_signal_config"/>
+
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
