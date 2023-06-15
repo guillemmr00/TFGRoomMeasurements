@@ -104,10 +104,6 @@ class Visualizer : AppCompatActivity() {
         binding.bottomSheetGraph.tvEndFreq.setText("Ending Frequency: ${f1} Hz")
         binding.bottomSheetGraph.textInputNotes.setText("${notes}")
 
-
-        Thread.sleep(1000)
-        plot("rt", third = true)
-
         autoCompleteTextView.setOnItemClickListener { parent, view, position, id ->
             val selectedMode = parent.getItemAtPosition(position).toString().lowercase()
             binding.normToggleBtn.isVisible = false
@@ -184,6 +180,10 @@ class Visualizer : AppCompatActivity() {
         binding.smoothToggleBtn.isVisible = false
         binding.octaveConfigLayout.isVisible = false
 
+
+
+        Thread.sleep(3000)
+        plot("definition", third = true)
     }
 
     private fun plot(mode: String, norm : Boolean=false, smooth: Boolean = false, third : Boolean = false){
@@ -271,10 +271,17 @@ class Visualizer : AppCompatActivity() {
             val c50 = ArrayList<DataEntry>()
             val c80 = ArrayList<DataEntry>()
 
-            for (i in 0 until octaveParams[0].size) {
+            if (third){
+                for (i in 0 until thirdOctaveParams[0].size) {
+                c50.add(ValueDataEntry(thirdOctaveParams[0][i], thirdOctaveParams[5][i]))
+                c80.add(ValueDataEntry(thirdOctaveParams[0][i], thirdOctaveParams[6][i]))
+                }
+            } else {
+                for (i in 0 until octaveParams[0].size) {
                 c50.add(ValueDataEntry(octaveParams[0][i], octaveParams[5][i]))
                 c80.add(ValueDataEntry(octaveParams[0][i], octaveParams[6][i]))
-            }
+            }}
+
 
             val c50Line = line.line(c50)
             c50Line.name("C50")
@@ -286,9 +293,16 @@ class Visualizer : AppCompatActivity() {
 
         else if(mode =="definition"){
             val d50 = ArrayList<DataEntry>()
-            for (i in 0 until octaveParams[0].size) {
+
+            if (third){
+                for (i in 0 until thirdOctaveParams[0].size) {
+                    d50.add(ValueDataEntry(thirdOctaveParams[0][i], thirdOctaveParams[7][i]))
+                }
+            } else{
+                for (i in 0 until octaveParams[0].size) {
                 d50.add(ValueDataEntry(octaveParams[0][i], octaveParams[7][i]))
-            }
+            }}
+
 
             val d50Line = line.line(d50)
             d50Line.name("D50")
@@ -337,9 +351,9 @@ class Visualizer : AppCompatActivity() {
                 t20 += async{computeT20(schroeder, peak)}.await()
                 t30 += async{computeT30(schroeder, peak)}.await()
                 t60 += async{computeT60(schroeder, peak)}.await()
-                //c50 += async{computeC50(band, peak)}.await()
-                //c80 += async{computeC80(band, peak)}.await()
-                //d50 += async{computeD50(band, peak)}.await()
+                c50 += async{computeC50(band, peak)}.await()
+                c80 += async{computeC80(band, peak)}.await()
+                d50 += async{computeD50(band, peak)}.await()
 
             }
             fCenter *= 2.0.pow(octave)
@@ -376,9 +390,9 @@ class Visualizer : AppCompatActivity() {
                 t20 += async{computeT20(schroeder, peak)}.await()
                 t30 += async{computeT30(schroeder, peak)}.await()
                 t60 += async{computeT60(schroeder, peak)}.await()
-                //c50 += async{computeC50(band, peak)}.await()
-                //c80 += async{computeC80(band, peak)}.await()
-                //d50 += async{computeD50(band, peak)}.await()
+                c50 += async{computeC50(band, peak)}.await()
+                c80 += async{computeC80(band, peak)}.await()
+                d50 += async{computeD50(band, peak)}.await()
 
             }
             fCenter *= 2.0.pow(octave)
@@ -512,8 +526,9 @@ class Visualizer : AppCompatActivity() {
     suspend fun computeAll() = coroutineScope {
         awaitAll(
             ::computeParameters,
+            ::computeParametersThird,
             ::fft,
-            ::computeParametersThird
+
         )
     }
 
