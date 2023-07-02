@@ -18,6 +18,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.room.Room
 import com.github.psambit9791.jdsp.filter.Butterworth
@@ -78,6 +79,7 @@ class MainActivity : AppCompatActivity() {
         val alertTv = view.findViewById<TextView>(R.id.alertTV)
 
 
+
         db = Room.databaseBuilder(
             this,
             AppDatabase::class.java,
@@ -108,9 +110,7 @@ class MainActivity : AppCompatActivity() {
         binding.bottomSheet.toggleGroupSampleRate.selectButton(R.id.toggleBtn44hz)
 
         GlobalScope.launch{
-            runOnUiThread { alertTv.text = "Creating Sweep..."
-                dialog.show()}
-            //sweep = Sweep()
+
             sweep = Sweep(
                 44100,
                 binding.bottomSheet.startFreqScroll.value.toDouble(),
@@ -126,8 +126,9 @@ class MainActivity : AppCompatActivity() {
                 binding.bottomSheet.startFreqScroll.value.toDouble(),
                 binding.bottomSheet.endFreqScroll.value.toDouble(),
             )
-            runOnUiThread { dialog.dismiss() }
         }
+
+
 
         binding.bottomSheet.seekBarLenght.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
@@ -155,6 +156,7 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread { alertTv.text = "Performing measurement..."
                 dialog.show()}
                 recording = performMeasurement(sweep.sweep)
+                outLevel = signalRms(recording)
 
                 runOnUiThread { alertTv.text = "Inserting data into DB..."}
                 //savePcmToFile2(recording, "$dirPath/recording.pcm")
@@ -195,8 +197,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnSettings.setOnClickListener {
-                bottomSheetBehavior.state=BottomSheetBehavior.STATE_EXPANDED
-                binding.bottomSheetBG.visibility = View.VISIBLE
+            bottomSheetBehavior.state=BottomSheetBehavior.STATE_EXPANDED
+            binding.bottomSheetBG.visibility = View.VISIBLE
         }
 
         binding.bottomSheetBG.setOnClickListener {
@@ -233,7 +235,12 @@ class MainActivity : AppCompatActivity() {
                     binding.bottomSheet.endFreqScroll.value.toDouble(),
                 )
                 runOnUiThread {
-                    dialog.dismiss() }
+                    dialog.dismiss()
+                    binding.btnRecord.setImageResource(R.drawable.ic_record_disabled)
+                    binding.btnRecord.isClickable = false
+                    binding.levelTV.text = "00.00 dBFS"
+                    binding.levelTV.setTextColor(getColor(R.color.white))
+                }
             }
         }
 
@@ -245,8 +252,8 @@ class MainActivity : AppCompatActivity() {
             thread {
                 runOnUiThread { alertTv.text = "Performing calibration..."
                     dialog.show()}
-                outLevel = performCalibration(pinkNoise)
-                val dbRms = 20 * Math.log10(outLevel / Short.MAX_VALUE)
+                val calLevel = performCalibration(pinkNoise)
+                val dbRms = 20 * Math.log10(calLevel / Short.MAX_VALUE)
 
                 runOnUiThread { dialog.dismiss()
                 if (dbRms>=-30.0){
@@ -268,7 +275,6 @@ class MainActivity : AppCompatActivity() {
         binding.btnRecord.isClickable = false
 
     }
-
 
     fun pinkNoise(duration: Double, sampleRate : Int, amplitude : Short, f0 : Double, f1 : Double): ShortArray {
         val length = (duration * sampleRate).toInt()
@@ -338,10 +344,6 @@ class MainActivity : AppCompatActivity() {
             )
             .setBufferSizeInBytes(bufferSize)
             .build()
-
-        val outDevices =  audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
-        val inDevices =  audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)
-        //audioTrack.setPreferredDevice(audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)[0])
 
 
         val audioRecord = AudioRecord(
@@ -434,10 +436,8 @@ class MainActivity : AppCompatActivity() {
         while (read < pinkNoise.size) {
             val trackShortRead = min(pinkNoise.size - read, bufferSizeShort)
             audioTrack.write(pinkNoise, read, trackShortRead)
-            audioRecord.read(recordData, 0, trackShortRead)
-            if (trackShortRead != recordData.size){
-                recordData = recordData.slice(0 until trackShortRead).toShortArray()
-            }
+            //audioRecord.read(recordData, 0, trackShortRead)
+            audioRecord.read(recordData, 0, bufferSizeShort)
             read += trackShortRead
 
             for (i in 0 until trackShortRead){
@@ -468,6 +468,4 @@ class MainActivity : AppCompatActivity() {
         imm.hideSoftInputFromWindow(view.windowToken, 0)
 
     }
-
-
 }

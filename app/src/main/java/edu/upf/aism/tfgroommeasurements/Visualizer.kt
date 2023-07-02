@@ -2,25 +2,28 @@ package edu.upf.aism.tfgroommeasurements
 
 import android.app.AlertDialog
 import android.content.Context
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import com.anychart.AnyChart
 import com.anychart.AnyChartView
 import com.anychart.chart.common.dataentry.DataEntry
 import com.anychart.chart.common.dataentry.ValueDataEntry
+import com.anychart.charts.Cartesian
 import com.anychart.enums.MarkerType
 import com.github.psambit9791.jdsp.filter.Butterworth
+import com.github.psambit9791.jdsp.signal.Smooth
 import com.github.psambit9791.jdsp.transform.FastFourier
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import edu.upf.aism.tfgroommeasurements.databinding.ActivityVisualizerBinding
 import kotlinx.coroutines.*
 import kotlin.math.log10
 import kotlin.math.pow
+
 
 class Visualizer : AppCompatActivity() {
 
@@ -34,11 +37,12 @@ class Visualizer : AppCompatActivity() {
     private var f1 = 0.0
     private var duration = 0.0
     private lateinit var mode : String
-    private var amplitude = 0.0
+    private var refLevel = 0.0
     private lateinit var impulseResponse : DoubleArray
 
     private lateinit var irdb : DoubleArray
     private lateinit var freqResponse : DoubleArray
+    private lateinit var smoothFr : DoubleArray
     private lateinit var freqs : DoubleArray
     private var plotMode = "ir"
 
@@ -53,11 +57,13 @@ class Visualizer : AppCompatActivity() {
 
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<LinearLayout>
 
+    private lateinit var chartView: AnyChartView
+    private lateinit var cartesian : Cartesian
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityVisualizerBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
 
 
         val builder = AlertDialog.Builder(this)
@@ -87,7 +93,7 @@ class Visualizer : AppCompatActivity() {
         f1 = intent.getDoubleExtra("f1", 20000.0)
         duration = intent.getDoubleExtra("duration", 5.0)
         mode = intent.getStringExtra("mode")!!
-        amplitude = intent.getDoubleExtra("amplitude", 1.0)
+        refLevel = intent.getDoubleExtra("amplitude", 1.0)
         val impulseResponsePath = intent.getStringExtra("impulseResponsePath")!!
         impulseResponse = loadPcmFromFile(impulseResponsePath)!!
 
@@ -107,9 +113,11 @@ class Visualizer : AppCompatActivity() {
         autoCompleteTextView.setOnItemClickListener { parent, view, position, id ->
             val selectedMode = parent.getItemAtPosition(position).toString().lowercase()
             binding.normToggleBtn.isVisible = false
+            binding.normToggleBtn.isChecked = false
+
             binding.smoothToggleBtn.isVisible = false
-            binding.normToggleBtn.isSelected = false
-            binding.smoothToggleBtn.isSelected = false
+            binding.smoothToggleBtn.isChecked = false
+
             binding.octaveConfigLayout.isVisible = false
             binding.thirdOctaveSwitch.isChecked = false
 
@@ -134,8 +142,9 @@ class Visualizer : AppCompatActivity() {
                     plotMode="definition"
                     binding.octaveConfigLayout.isVisible = true
                 }
-                "dtt & cte" -> {
-                    plotMode="dtt & cte"
+                "drr & cte" -> {
+                    plotMode="drr_cte"
+                    binding.octaveConfigLayout.isVisible = true
                 }
             }
             plot(plotMode)
@@ -143,23 +152,31 @@ class Visualizer : AppCompatActivity() {
 
         binding.normToggleBtn.setOnClickListener {
             if (binding.normToggleBtn.isChecked){
-            plot(plotMode, false)
-        }else{
             plot(plotMode, true)
+        }else{
+            plot(plotMode, false)
         } }
 
-
-        binding.backBtn.setOnClickListener {
-            onBackPressed()
-        }
-
         binding.thirdOctaveSwitch.setOnClickListener{
-            if(binding.normToggleBtn.isChecked){
+            if(binding.thirdOctaveSwitch.isChecked){
                 plot(plotMode, third=true)
             }
             else{
                 plot(plotMode)
             }
+        }
+
+        binding.smoothToggleBtn.setOnClickListener{
+            if(binding.smoothToggleBtn.isChecked){
+                plot(plotMode, smooth=true)
+            }
+            else{
+                plot(plotMode)
+            }
+        }
+
+        binding.backBtn.setOnClickListener {
+            onBackPressed()
         }
 
         binding.btnInfo.setOnClickListener {
@@ -177,65 +194,107 @@ class Visualizer : AppCompatActivity() {
             dismiss()
         }
 
+
+        chartView = findViewById<AnyChartView>(R.id.chart_view)
+        cartesian = AnyChart.line()
+        cartesian.xScroller(true)
+        chartView.setChart(cartesian)
+
         binding.smoothToggleBtn.isVisible = false
         binding.octaveConfigLayout.isVisible = false
-
-
-
-        Thread.sleep(3000)
-        plot("definition", third = true)
+        plot("ir")
     }
 
     private fun plot(mode: String, norm : Boolean=false, smooth: Boolean = false, third : Boolean = false){
-        val chartView = findViewById<AnyChartView>(R.id.chart_view)
-
-        val line = AnyChart.line()
+        //val chartView = findViewById<AnyChartView>(R.id.chart_view)
+        //val cartesian = AnyChart.line()
+        cartesian.removeAllSeries()
 
         if (mode == "ir"){
             val data = ArrayList<DataEntry>()
+            cartesian.xScroller(true)
+
+            var xTitle = cartesian.xAxis(0).title();
+            xTitle.enabled(true)
+            xTitle.text("Seconds")
+            xTitle.margin().top(-10)
+
+
+            var yTitle = cartesian.yAxis(0).title();
+            yTitle.enabled(true)
+            yTitle.margin(-8)
+
             tArray = (0 until impulseResponse.size).map { it.toDouble() / sampleRate }.toDoubleArray()
+            val max = findIndexOfMaxValue(impulseResponse)
+            val start = max-(0.1*44100).toInt()
+            val end = max + (0.4*44100).toInt()
 
             if (norm){
-
-                for (i in 0 until impulseResponse.size){
-                    data.add(ValueDataEntry(tArray[i], gainToDecibels(impulseResponse[i]*amplitude)))
+                yTitle.text("dBFS")
+                val irFactor = scaleSignal(impulseResponse, refLevel)
+                for (i in start until end){
+                    data.add(ValueDataEntry(tArray[i], gainToDecibels(impulseResponse[i]*irFactor)))
                 }
-
-                val hor = ArrayList<DataEntry>()
-                hor.add(ValueDataEntry(0, amplitude))
-                hor.add(ValueDataEntry(tArray.last(), amplitude))
-                val horLine = line.line(hor)
-                horLine.markers().enabled(false)
+                println("This is the max value!: ${max}")
 
             }
             else{
-                val max = findIndexOfMaxValue(impulseResponse)
-                val start = max-(0.1*44100).toInt()
-                val end = max + (0.4*44100).toInt()
+                yTitle.text("%")
                 for (i in start until end){
                     data.add(ValueDataEntry(tArray[i], impulseResponse[i]))
                 }
             }
 
-            val irLine = line.line(data)
+            val irLine = cartesian.line(data)
             irLine.name("IR")
 
         }
 
         else if(mode == "fr"){
+            cartesian.xScroller(true)
+            var xTitle = cartesian.xAxis(0).title();
+            xTitle.enabled(true)
+            xTitle.text("Hz")
+            xTitle.margin().top(-10)
+
+            var yTitle = cartesian.yAxis(0).title();
+            yTitle.enabled(true)
+            yTitle.text("dB")
+            yTitle.margin(-8)
             val data = ArrayList<DataEntry>()
-            for (i in f0.toInt() until f1.toInt()){
-                data.add(ValueDataEntry(freqs[i], freqResponse[i]))
+
+            if (smooth){
+                for (i in f0.toInt() until f1.toInt()){
+                    data.add(ValueDataEntry(freqs[i], smoothFr[i]))
+                }
             }
-            val frLine = line.line(data)
+            else{
+                for (i in f0.toInt() until f1.toInt()){
+                    data.add(ValueDataEntry(freqs[i], freqResponse[i]))
+                }
+            }
+
+            val frLine = cartesian.line(data)
             frLine.name("FR")
         }
 
         else if(mode=="rt"){
+            cartesian.xScroller(false)
+
             val edt = ArrayList<DataEntry>()
             val t20 = ArrayList<DataEntry>()
             val t30 = ArrayList<DataEntry>()
             val t60 = ArrayList<DataEntry>()
+
+            var xTitle = cartesian.xAxis(0).title();
+            xTitle.enabled(true)
+            xTitle.text("Hz")
+            xTitle.margin(-10)
+
+            var yTitle = cartesian.yAxis(0).title();
+            yTitle.enabled(true)
+            yTitle.text("Sec.")
+            yTitle.margin(-8)
 
             if (third){
                 for (i in 0 until thirdOctaveParams[0].size) {
@@ -253,23 +312,35 @@ class Visualizer : AppCompatActivity() {
                 }
             }
 
-            val edtLine = line.line(edt)
+            val edtLine = cartesian.line(edt)
             edtLine.name("EDT")
             edtLine.markers().enabled(true).type(MarkerType.CIRCLE).fill("#000500")
-            val t20Line = line.line(t20)
+            val t20Line = cartesian.line(t20)
             t20Line.name("RT20")
             t20Line.markers().enabled(true).type(MarkerType.CIRCLE).fill("#003000")
-            val t30Line = line.line(t30)
+            val t30Line = cartesian.line(t30)
             t30Line.name("RT30")
             t30Line.markers().enabled(true).type(MarkerType.CIRCLE).fill("#030000")
-            val t60Line = line.line(t60)
+            val t60Line = cartesian.line(t60)
             t60Line.name("RT60")
             t60Line.markers().enabled(true).type(MarkerType.CIRCLE).fill("#090000")
         }
 
         else if(mode =="clarity"){
+            cartesian.xScroller(false)
+
             val c50 = ArrayList<DataEntry>()
             val c80 = ArrayList<DataEntry>()
+
+            var xTitle = cartesian.xAxis(0).title();
+            xTitle.enabled(true)
+            xTitle.text("Hz")
+            xTitle.margin(-8)
+
+            var yTitle = cartesian.yAxis(0).title();
+            yTitle.enabled(true)
+            yTitle.text("dB")
+            yTitle.margin(-10)
 
             if (third){
                 for (i in 0 until thirdOctaveParams[0].size) {
@@ -283,16 +354,28 @@ class Visualizer : AppCompatActivity() {
             }}
 
 
-            val c50Line = line.line(c50)
+            val c50Line = cartesian.line(c50)
             c50Line.name("C50")
             c50Line.markers().enabled(true).type(MarkerType.CIRCLE).fill("#000500")
-            val c80Line = line.line(c80)
+            val c80Line = cartesian.line(c80)
             c80Line.name("C80")
             c80Line.markers().enabled(true).type(MarkerType.CIRCLE).fill("#003000")
         }
 
         else if(mode =="definition"){
+            cartesian.xScroller(false)
+
             val d50 = ArrayList<DataEntry>()
+
+            var xTitle = cartesian.xAxis(0).title();
+            xTitle.enabled(true)
+            xTitle.text("Hz")
+            xTitle.margin(-10)
+
+            var yTitle = cartesian.yAxis(0).title();
+            yTitle.enabled(true)
+            yTitle.text("%")
+            yTitle.margin(-8)
 
             if (third){
                 for (i in 0 until thirdOctaveParams[0].size) {
@@ -304,23 +387,53 @@ class Visualizer : AppCompatActivity() {
             }}
 
 
-            val d50Line = line.line(d50)
+            val d50Line = cartesian.line(d50)
             d50Line.name("D50")
             d50Line.markers().enabled(true).type(MarkerType.CIRCLE).fill("#000500")
 
         }
 
-        else if(mode =="dtt_cte"){}
+        else if(mode =="drr_cte"){
+            cartesian.xScroller(false)
 
-        line.legend().enabled(true);
-        line.legend().fontSize(13);
-        line.legend().padding(0, 0, 10, 0);
+            val drr = ArrayList<DataEntry>()
+            val cte = ArrayList<DataEntry>()
 
-        chartView.setChart(line)
+            var xTitle = cartesian.xAxis(0).title();
+            xTitle.enabled(true)
+            xTitle.text("Hz")
+            xTitle.margin(-10)
+
+            var yTitle = cartesian.yAxis(0).title();
+            yTitle.enabled(true)
+            yTitle.text("dB")
+            yTitle.margin(-8)
+
+            if (third){
+                for (i in 0 until thirdOctaveParams[0].size) {
+                    drr.add(ValueDataEntry(thirdOctaveParams[0][i], thirdOctaveParams[8][i]))
+                    cte.add(ValueDataEntry(thirdOctaveParams[0][i], thirdOctaveParams[9][i]))
+                }
+            } else {
+                for (i in 0 until octaveParams[0].size) {
+                    drr.add(ValueDataEntry(octaveParams[0][i], octaveParams[8][i]))
+                    cte.add(ValueDataEntry(octaveParams[0][i], octaveParams[9][i]))
+                }}
+
+
+            val drrLine = cartesian.line(drr)
+            drrLine.name("DRR")
+            drrLine.markers().enabled(true).type(MarkerType.CIRCLE).fill("#000500")
+            val cteLine = cartesian.line(cte)
+            cteLine.name("CTE")
+            cteLine.markers().enabled(true).type(MarkerType.CIRCLE).fill("#003000")
+        }
+
+        cartesian.legend().enabled(true);
+        cartesian.legend().fontSize(13);
+        cartesian.legend().padding(0, 0, 10, 0);
 
     }
-
-
 
     suspend fun computeParameters(octave : Double = 1.0) = coroutineScope{
         //octave can take either value 1 or 1/3
@@ -333,6 +446,8 @@ class Visualizer : AppCompatActivity() {
         var c50 = doubleArrayOf()
         var c80 = doubleArrayOf()
         var d50 = doubleArrayOf()
+        var drr = doubleArrayOf()
+        var cte = doubleArrayOf()
 
         val ir = impulseResponse
 
@@ -354,11 +469,13 @@ class Visualizer : AppCompatActivity() {
                 c50 += async{computeC50(band, peak)}.await()
                 c80 += async{computeC80(band, peak)}.await()
                 d50 += async{computeD50(band, peak)}.await()
+                drr += async{computeDrr(band, peak)}.await()
+                cte += async{computeCte(band, peak)}.await()
 
             }
             fCenter *= 2.0.pow(octave)
         }
-        octaveParams = arrayOf(freqs, edt, t20, t30, t60, c50, c80, d50)
+        octaveParams = arrayOf(freqs, edt, t20, t30, t60, c50, c80, d50, drr, cte)
     }
 
     suspend fun computeParametersThird(octave : Double = (1.0/3.0).toDouble()) = coroutineScope{
@@ -372,6 +489,8 @@ class Visualizer : AppCompatActivity() {
         var c50 = doubleArrayOf()
         var c80 = doubleArrayOf()
         var d50 = doubleArrayOf()
+        var drr = doubleArrayOf()
+        var cte = doubleArrayOf()
 
         val ir = impulseResponse
 
@@ -393,11 +512,13 @@ class Visualizer : AppCompatActivity() {
                 c50 += async{computeC50(band, peak)}.await()
                 c80 += async{computeC80(band, peak)}.await()
                 d50 += async{computeD50(band, peak)}.await()
+                drr += async{computeDrr(band, peak)}.await()
+                cte += async{computeCte(band, peak)}.await()
 
             }
             fCenter *= 2.0.pow(octave)
         }
-        thirdOctaveParams = arrayOf(freqs, edt, t20, t30, t60, c50, c80, d50)
+        thirdOctaveParams = arrayOf(freqs, edt, t20, t30, t60, c50, c80, d50, drr, cte)
     }
 
     private fun computeSchroeder(ir: DoubleArray): DoubleArray {
@@ -485,7 +606,7 @@ class Visualizer : AppCompatActivity() {
         val earlyEnergy = ir.slice(peak until peak+(0.5*sampleRate).toInt()).map{it.pow(2)}.sum()
         val lateEnergy = ir.slice(peak until ir.size).map{it.pow(2)}.sum()
 
-        return earlyEnergy / lateEnergy
+        return (earlyEnergy / lateEnergy)*100
     }
 
     private fun computeDrr(ir : DoubleArray, peak : Int): Double{
@@ -505,15 +626,24 @@ class Visualizer : AppCompatActivity() {
 
 
     suspend fun fft() = coroutineScope{
-        val fftObj = FastFourier(impulseResponse)
+        val a = scaleSignal(impulseResponse, refLevel)
+        val fftObj = FastFourier(impulseResponse.map(){it*a}.toDoubleArray())
         fftObj.transform()
         val frequencies = fftObj.getFFTFreq(44100, true)
-        val fftMag = gainToDecibels(fftObj.getMagnitude(true))
+        val fftMag = fftObj.getMagnitude(true)
         val step = 44100.0/(frequencies.size*2)
         val startBin = (f0/step).toInt()
         val finishBin = (f1/step).toInt()
         freqs = frequencies.sliceArray(startBin .. finishBin)
-        freqResponse= fftMag.sliceArray(startBin .. finishBin)
+        val slicedFreqResponse= fftMag.sliceArray(startBin .. finishBin)
+        val scaleFactor1 = scaleSignal(slicedFreqResponse, refLevel)
+        val dbFreqResponse = slicedFreqResponse.map(){it*scaleFactor1}.toDoubleArray()
+        //freqResponse = gainToDecibels(dbFreqResponse)
+
+        freqResponse= gainToDecibels(slicedFreqResponse)
+        val ss = Smooth(freqResponse, 500, "triangular")
+        smoothFr = ss.smoothSignal()
+
 
     }
 

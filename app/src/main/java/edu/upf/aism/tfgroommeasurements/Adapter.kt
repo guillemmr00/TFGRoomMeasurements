@@ -8,6 +8,8 @@ import android.widget.CheckBox
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
@@ -68,10 +70,12 @@ class Adapter(var measures : ArrayList<RoomMeasure>, var listener: OnItemClickLi
 
 
             holder.tvFilename.text = measure.filename
-            holder.tvDate.text = strDate
+            holder.tvDate.text = "Date: ${strDate.replace("_", " ").replace("-", "/")}"
             holder.tvSweepFreq.text = "Mode: ${measure.mode}  f0: ${measure.f0.toInt()} Hz  f1:${measure.f1.toInt()} Hz"
             holder.tvSweepDur.text = "Duration: ${measure.duration} secs.  Samplerate:${measure.sampleRate}"
-            holder.tvSweepLevel.text = "Level:${measure.outGain}"
+
+            val dbRms = 20 * Math.log10(measure.outGain / Short.MAX_VALUE)
+            holder.tvSweepLevel.text = "Level: ${ BigDecimal(dbRms).setScale(2, RoundingMode.HALF_EVEN) } dBFS"
 
             if(editMode){
                 holder.checkbox.visibility = View.VISIBLE

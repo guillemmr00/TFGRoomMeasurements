@@ -23,6 +23,7 @@
             />
 
         <ImageView
+            android:id="@+id/mainLogo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/logo_tgf"
@@ -92,8 +93,14 @@
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-
+<!--
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+    <include
+        layout="@layout/activity_splash_screen"
+        />
+-->
     <View
         android:id="@+id/bottomSheetBG"
         android:visibility="gone"

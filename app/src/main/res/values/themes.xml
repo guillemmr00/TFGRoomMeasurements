@@ -2,8 +2,9 @@
     <!-- Base application theme. -->
     <style name="Theme.TFGRoomMeasurements" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/purple_500</item>
-        <item name="colorPrimaryVariant">@color/purple_700</item>
+        <!--<item name="colorPrimary">@color/purple_500</item>-->
+        <item name="colorPrimary">@color/mainblue</item>
+        <item name="colorPrimaryVariant">@color/mainblue</item>
         <item name="colorOnPrimary">@color/white</item>
         <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/teal_200</item>
@@ -22,7 +23,7 @@
         <item name="android:layout_marginTop">20dp</item>
         <item name="android:layout_marginBottom">20dp</item>
         <item name="boxBackgroundColor">@color/grey</item>
-        <item name="boxStrokeColor">@color/strokeColor</item>
+        <item name="boxStrokeColor">@color/mainblue</item>
         <item name="boxCornerRadiusBottomStart">26dp</item>
         <item name="boxCornerRadiusBottomEnd">26dp</item>
         <item name="boxCornerRadiusTopStart">26dp</item>
@@ -40,6 +41,13 @@
         <item name="boxCornerRadiusBottomEnd">36dp</item>
         <item name="endIconMode">clear_text</item>
         <item name="startIconDrawable">@drawable/ic_search</item>
+    </style>
+
+    <style name="SplashCreenTheme" parent="Theme.AppCompat.NoActionBar">
+
+        <item name="colorPrimary">@color/mainblue</item>
+        <item name="colorPrimaryVariant">@color/mainblue</item>
+        <item name="colorOnPrimary">@color/white</item>
 
     </style>
 </resources>

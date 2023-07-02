@@ -73,6 +73,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="30dp"
                     app:toggle_text="Linear"
+                    app:toggle_selectedBackgroundColor="@color/mainblue"
                     />
 
                 <nl.bryanderidder.themedtogglebuttongroup.ThemedButton
@@ -80,6 +81,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="30dp"
                     app:toggle_text="Exponential"
+                    app:toggle_selectedBackgroundColor="@color/mainblue"
+
                     />
 
 
@@ -109,6 +112,9 @@
                     android:layout_width="match_parent"
                     android:min="3"
                     android:max="8"
+                    android:progressTint="@color/mainblue"
+                    android:thumbTint="@color/mainblue"
+
                     />
 
                 <TextView
@@ -147,10 +153,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="30dp"
                     app:toggle_text="44.1 kHz"
-                    android:layout_margin="3dp"/>
-
-
-
+                    android:layout_margin="3dp"
+                    app:toggle_selectedBackgroundColor="@color/mainblue"
+                    />
 
             </nl.bryanderidder.themedtogglebuttongroup.ThemedToggleButtonGroup>
 
@@ -208,6 +213,8 @@
                     android:layout_width="match_parent"
                     android:min="0"
                     android:max="1000"
+                    android:progressTint="@color/mainblue"
+                    android:thumbTint="@color/mainblue"
                     />
 
                 <TextView
@@ -260,7 +267,7 @@
                     android:layout_height="60dp"
                     android:text="OK"
                     android:layout_marginStart="20dp"
-                    android:backgroundTint="@color/strokeColor"
+                    android:backgroundTint="@color/mainblue"
                     app:cornerRadius="26dp"
                     app:rippleColor="@color/greyDark"/>
             </LinearLayout>

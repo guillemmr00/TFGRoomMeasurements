@@ -9,6 +9,7 @@ import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.res.ResourcesCompat
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.room.Room
@@ -83,6 +84,7 @@ class GalleryActivity : AppCompatActivity(), OnItemClickListener {
 
         var recyclerview = findViewById<RecyclerView>(R.id.recyclerview)
         recyclerview.apply {
+            addItemDecoration(DividerItemDecoration(recyclerview.context, DividerItemDecoration.VERTICAL))
             adapter = mAdapter
             layoutManager = LinearLayoutManager(context)
         }

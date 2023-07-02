@@ -3,6 +3,7 @@ package edu.upf.aism.tfgroommeasurements
 import com.github.psambit9791.jdsp.transform.DiscreteFourier
 import com.github.psambit9791.jdsp.transform.FastFourier
 import java.io.*
+import java.lang.Math.pow
 import kotlin.math.*
 
 
@@ -99,7 +100,7 @@ fun decibelsToGain(decibels: DoubleArray, dbType: String = "dBFS"): DoubleArray 
 
 fun gainToDecibels(gain : Double) : Double{
 
-    return 20.0 * log10(gain/Short.MAX_VALUE.toDouble())
+    return 20.0 * log10(gain/Short.MAX_VALUE)
 }
 
 fun gainToDecibels(gain : DoubleArray) : DoubleArray{
@@ -319,4 +320,21 @@ fun fadeLog(size : Int, fadeInEndSample : Int) : DoubleArray{
     }
 
     return array
+}
+
+fun signalRms(signal : DoubleArray) : Double {
+    val sigSquared = DoubleArray(signal.size){signal[it]*signal[it]}
+    val meanSquared = sigSquared.sum()/signal.size
+    return sqrt(meanSquared)
+}
+
+fun signalRms(signal : ShortArray) : Double {
+    val sigSquared = DoubleArray(signal.size){signal[it].toDouble()*signal[it]}
+    val meanSquared = sigSquared.sum()/signal.size
+    return sqrt(meanSquared)
+}
+
+fun scaleSignal(signal : DoubleArray, outGain : Double) : Double{
+    val energy = DoubleArray(signal.size){pow(signal[it], 2.0)}.sum()
+    return sqrt((signal.size*pow(outGain, 2.0))/energy)
 }

@@ -138,7 +138,7 @@
                     android:layout_height="60dp"
                     android:text="OK"
                     android:layout_marginStart="20dp"
-                    android:backgroundTint="@color/strokeColor"
+                    android:backgroundTint="@color/mainblue"
                     app:cornerRadius="26dp"
                     app:rippleColor="@color/greyDark"/>
             </LinearLayout>
