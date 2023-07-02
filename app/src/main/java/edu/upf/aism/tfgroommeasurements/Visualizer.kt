@@ -195,9 +195,9 @@ class Visualizer : AppCompatActivity() {
         }
 
 
-        chartView = findViewById<AnyChartView>(R.id.chart_view)
+        chartView = findViewById(R.id.chart_view)
         cartesian = AnyChart.line()
-        cartesian.xScroller(true)
+        //cartesian.xScroller(true)
         chartView.setChart(cartesian)
 
         binding.smoothToggleBtn.isVisible = false
@@ -209,6 +209,7 @@ class Visualizer : AppCompatActivity() {
         //val chartView = findViewById<AnyChartView>(R.id.chart_view)
         //val cartesian = AnyChart.line()
         cartesian.removeAllSeries()
+        cartesian.xScroller(false)
 
         if (mode == "ir"){
             val data = ArrayList<DataEntry>()
@@ -247,7 +248,6 @@ class Visualizer : AppCompatActivity() {
 
             val irLine = cartesian.line(data)
             irLine.name("IR")
-
         }
 
         else if(mode == "fr"){
@@ -279,7 +279,7 @@ class Visualizer : AppCompatActivity() {
         }
 
         else if(mode=="rt"){
-            cartesian.xScroller(false)
+            //cartesian.xScroller(false)
 
             val edt = ArrayList<DataEntry>()
             val t20 = ArrayList<DataEntry>()
@@ -327,7 +327,7 @@ class Visualizer : AppCompatActivity() {
         }
 
         else if(mode =="clarity"){
-            cartesian.xScroller(false)
+            //cartesian.xScroller(false)
 
             val c50 = ArrayList<DataEntry>()
             val c80 = ArrayList<DataEntry>()
@@ -363,7 +363,7 @@ class Visualizer : AppCompatActivity() {
         }
 
         else if(mode =="definition"){
-            cartesian.xScroller(false)
+            //cartesian.xScroller(false)
 
             val d50 = ArrayList<DataEntry>()
 
@@ -394,7 +394,7 @@ class Visualizer : AppCompatActivity() {
         }
 
         else if(mode =="drr_cte"){
-            cartesian.xScroller(false)
+            //cartesian.xScroller(false)
 
             val drr = ArrayList<DataEntry>()
             val cte = ArrayList<DataEntry>()
